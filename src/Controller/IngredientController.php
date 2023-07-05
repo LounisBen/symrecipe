@@ -5,23 +5,21 @@
 namespace App\Controller;
 use App\Entity\Ingredient;
 use App\Form\IngredientType;
-use App\Repository\IngredientRepository;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Entity;
+use App\Repository\IngredientRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+// use Symfony\Component\Security\Core\Security;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 
 class IngredientController extends AbstractController
-
-
-
 {
     /**
      * This controller display all ingredients
@@ -53,7 +51,7 @@ class IngredientController extends AbstractController
      * @param EntityManagerInterface $manager
      * @return Response
      */   
-    #[route('/ingredient/nouveau', 'ingredient.new', methods: ['GET', 'POST'])]
+    #[Route('/ingredient/creation', name:'ingredient.new', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_USER')]
     public function new(
         Request $request,
@@ -128,8 +126,9 @@ class IngredientController extends AbstractController
      * @param Ingredient $ingredient
      * @return Response
      */
-    #[Route('/ingredient/suppression/{id}', 'ingredient.delete', methods: ['GET', 'POST'])]
-     public function delete(
+    #[Route('/ingredient/suppression/{id}', 'ingredient.delete', methods: ['GET'])]
+    #[Security("is_granted('ROLE_USER') and user === ingredient.getUser()")] 
+    public function delete(
         EntityManagerInterface $manager,
         Ingredient $ingredient
         ): Response {

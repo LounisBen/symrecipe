@@ -59,8 +59,19 @@
         </div>
     </div>
 
-        {{ form_row(form.ingredients) }}
+    {{ form_row(form.imageFile) }}
 
-        {{ form_end(form) }}
-    </div>
+    {{ form_label(form.ingredients) }}
+		<br>
+		<div id="ingredients-wrapper">
+			{% for field in form.ingredients %}
+				<div style="min-width: 10%;">
+					{{ form_widget(field) }}
+					{{ form_label(field) }}
+				</div>
+			{% endfor %}
+		</div>
+
+		{{ form_end(form) }}
+	</div>
 {% endblock %}

@@ -11,11 +11,13 @@ use App\Repository\RecipeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Request;
+// use Symfony\Component\Security\Core\Security;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
 
 class RecipeController extends AbstractController
 {
@@ -46,7 +48,7 @@ class RecipeController extends AbstractController
         ]);
     }
 
-    #[Route('/recette/publique', 'recipe.index.public', methods: ['GET'])]
+    #[Route('/recette/communaute', 'recipe.community', methods: ['GET'])]
     public function indexPublic(
         RecipeRepository $repository,
         PaginatorInterface $paginator,
@@ -58,18 +60,117 @@ class RecipeController extends AbstractController
                 10 
         );
         
-        return $this->render('pages/recipe/index_public.html.twig', [
+        return $this->render('pages/recipe/community.html.twig', [
             'recipes' => $recipes
         ]);
     }
 
+     /**
+     * This controller allow us to create a new recipe
+     *
+     * @param Request $request
+     * @param EntityManagerInterface $manager
+     * @return Response
+     */
+    #[IsGranted('ROLE_USER')]
+    #[Route('/recette/creation', 'recipe.new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $manager) : Response
+    {
+        $recipe = new Recipe();
+        $form = $this->createForm(RecipeType::class, $recipe);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $recipe = $form->getData();
+            $recipe->setUser($this->getUser());
+
+            $manager->persist($recipe);
+            $manager->flush();
+
+            $this->addFlash(
+                'success',
+                'Votre recette a été créée avec succès !'
+            );
+
+            return $this->redirectToRoute('recipe.index');
+        }
+        
+            return $this->render('pages/recipe/new.html.twig', [
+            'form' => $form->createView()
+        ]);
+    }
+
+     /**
+     * This controller allow us to edit a recipe
+     *
+     * @param Recipe $recipe
+     * @param Request $request
+     * @param EntityManagerInterface $manager
+     * @return Response
+     */
+    #[Route('/recette/edition/{id}', 'recipe.edit', methods: ['GET', 'POST'])]
+    #[Security("is_granted('ROLE_USER') and user === recipe.getUser()")]
+    public function edit(
+        Recipe $recipe,
+        Request $request,
+        EntityManagerInterface $manager
+    ): Response {
+        $form = $this->createForm(RecipeType::class, $recipe);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $recipe = $form->getData();
+
+            $manager->persist($recipe);
+            $manager->flush();
+
+            $this->addFlash(
+                'success',
+                'Votre recette a été modifié avec succès !'
+            );
+
+            return $this->redirectToRoute('recipe.index');
+        }
+
+        return $this->render('pages/recipe/edit.html.twig', [
+            'form' => $form->createView()
+        ]);
+    }
+
+    
+    
     /**
+     * This controller allow us to delete a recipe
+     *
+     * @param EntityManagerInterface $manager
+     * @param Recipe $recipe
+     * @return Response
+     */
+    #[Route('/recette/suppression/{id}', 'recipe.delete', methods: ['GET', 'POST'])]
+    #[Security("is_granted('ROLE_USER') and user === recipe.getUser()")] 
+    public function delete(
+        EntityManagerInterface $manager,
+        Recipe $recipe
+        ): Response {
+        $manager->remove($recipe);
+        $manager->flush();
+
+        $this->addFlash(
+            'success',
+            'Votre recette a été supprimée avec succès !'
+        );
+
+        return $this->redirectToRoute('recipe.index');
+    }
+
+     /**
      * This controller allow us to see a recipe if this one is public
      *
      * @param Recipe $recipe
      * @return Response
      */
-    #[Security("is_granted('ROLE_USER') and recipe.isIsPublic() === true")]
+    #[Security("is_granted('ROLE_USER') and recipe.getIsPublic() === true || user === recipe.getUser()")]
+    
     #[Route('/recette/{id}', 'recipe.show', methods: ['GET', 'POST'])]
     public function show(
         Recipe $recipe,
@@ -113,100 +214,5 @@ class RecipeController extends AbstractController
             'form'=>$form->createView()
         ]);
 
-    }
-
-    /**
-     * This controller allow us to create a new recipe
-     *
-     * @param Request $request
-     * @param EntityManagerInterface $manager
-     * @return Response
-     */
-    #[IsGranted('ROLE_USER')]
-    #[Route('/recette/creation', 'recipe.new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $manager) : Response
-    {
-        $recipe = new Recipe();
-        $form = $this->createForm(RecipeType::class, $recipe);
-
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $recipe = $form->getData();
-            $recipe->setUser($this->getUser());
-
-            $manager->persist($recipe);
-            $manager->flush();
-
-            $this->addFlash(
-                'success',
-                'Votre recette a été créée avec succès !'
-            );
-
-            return $this->redirectToRoute('recipe.index');
-        }
-        
-            return $this->render('pages/recipe/new.html.twig', [
-            'form' => $form->createView()
-        ]);
-    }
-       
-    /**
-     * This controller allow us to edit a recipe
-     *
-     * @param Recipe $recipe
-     * @param Request $request
-     * @param EntityManagerInterface $manager
-     * @return Response
-     */
-    #[Security("is_granted('ROLE_USER') and user === recipe.getUser()")]
-     #[Route('/recette/edition/{id}', 'recipe.edit', methods: ['GET', 'POST'] )]
-    public function edit(
-        Recipe $recipe,
-        Request $request,
-        EntityManagerInterface $manager
-    ): Response {
-        
-        $form = $this->createForm(RecipeType::class, $recipe);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $recipe = $form->getData();
-        
-            $manager->persist($recipe);
-            $manager->flush();
-
-            $this->addFlash(
-                'success',
-                'Votre recette a été modifié avec succès !'
-            );
-            return $this->redirectToRoute('recipe.index');
-        }
-        return $this->render('pages/recipe/edit.html.twig', [
-            'form' => $form->createView()
-        
-        ]);
-    }
-    
-    
-    /**
-     * This controller allow us to delete a recipe
-     *
-     * @param EntityManagerInterface $manager
-     * @param Recipe $recipe
-     * @return Response
-     */
-    #[Route('/recette/suppression/{id}', 'recipe.delete', methods: ['GET', 'POST'])]
-     public function delete(
-        EntityManagerInterface $manager,
-        Recipe $recipe
-        ): Response {
-        $manager->remove($recipe);
-        $manager->flush();
-
-        $this->addFlash(
-            'success',
-            'Votre recette a été supprimée avec succès !'
-        );
-
-        return $this->redirectToRoute('recipe.index');
     }
 }

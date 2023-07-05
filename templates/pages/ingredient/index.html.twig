@@ -5,6 +5,12 @@
 
 {% block body %}
     <div class="container mt-4">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success mt-4">
+            {{ message }}
+            </div>
+        {% endfor %}
+
         {% if not ingredients.items is same as ([]) %}
         <h1>Mes ingrédients</h1>
 
@@ -13,15 +19,10 @@
         </a>
 
         {# read and display just one flash message type #}
-        {% for message in app.flashes('success') %}
-            <div class="alert alert-success mt-4">
-            {{ message }}
-            </div>
-        {% endfor %}
-
+        
         <div class="count mt-4">Il y a 
             {{ ingredients.getTotalItemCount }}
-            ingrédients
+            ingrédient(s)
         </div>
 
         <table class="table table-hover">
@@ -40,7 +41,7 @@
                     <tr class="table-primary">
                         <th scope="row">{{ ingredient.id }}</th>
                         <td>{{ ingredient.name }}</td>
-                        <td>{{ ingredient.price }}</td>
+                        <td>{{ ingredient.price|number_format(2, '.', ',') }} €</td>
                         <td>{{ ingredient.createdAt|date('d/m/y') }}</td>
                         <td>
                             <a href="{{ path('ingredient.edit', { id: ingredient.id }) }}"
@@ -60,6 +61,11 @@
         </div>
        {% else %}
         <h4>Il n'y a pas d'ingrédients</h4>
+
+        <a href="{{ path('ingredient.new') }}" class="btn btn-primary">
+        Créer un ingredient
+        </a>
+
         {% endif %}
     </div>
 {% endblock %}
