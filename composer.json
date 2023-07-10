@@ -108,6 +108,22 @@
             "php bin/console doctrine:database:create",
             "php bin/console doctrine:schema:update --force --complete",
             "php bin/console doctrine:fixtures:load --append"
+        ],
+        
+        "fixtures_test": [
+            "php bin/console doctrine:database:drop --force --env=test",
+            "php bin/console doctrine:database:create --env=test",
+            "php bin/console doctrine:schema:update --force --complete --env=test",
+            "php bin/console doctrine:fixtures:load --append --env=test"
+        ],
+        "tests":
+        [
+            "php bin/console d:d:d --force --if-exists --env=test",
+            "php bin/console d:d:c --env=test",
+            "php bin/console d:s:u --no-interaction --force --env=test",
+           " php bin/console d:f:l --no-interaction --env=test",
+            "php bin/phpunit --testdox tests/Unit/",
+           " php bin/phpunit --testdox tests/Functional/"
         ]
     },
     "conflict": {

@@ -2,8 +2,10 @@
 
 {% block title%} Symrecipe - Nouveau ingredient {% endblock %}
 
+
 {% block body  %}
     <div class="container">
+        
         <h1 class="mt-4">Création d'un ingrédient</h1>
 
         {{ form_start(form) }}
@@ -15,14 +17,23 @@
             {{ form_errors(form.name) }}
             </div>
         </div>
-            <div class="form-group">
+            
+        <div class="form-group">
                 {{ form_label(form.price) }}
                 {{ form_widget(form.price) }}
                 <div class="form-error">
                 {{ form_errors(form.price) }}
                 </div>
-            </div>  
+        </div> 
 
+        <div class="form-group">
+			{{ form_row(form._token) }}
+		</div>
+
+        <div class="form-group">
+			{{ form_row(form.submit) }}
+	</div>
+   
         {{ form_end(form) }}
     </div>
-{% endblock %}
+    {% endblock %}
